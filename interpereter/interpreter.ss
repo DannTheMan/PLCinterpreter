@@ -100,7 +100,7 @@
       [(list->vector) (list->vector (1st args))]
       [(list?) (list? (1st args))]
       [(pair?) (pair? (1st args))]
-      [(procedure?) (proc-val? (1st-args))] ;;???!
+      [(procedure?) (proc-val? (1st-args))]
       [(vector->list) (vector->list (1st args))]
       [(vector) (apply vector args)]
       [(make-vector) (apply make-vector args)]
