@@ -13,6 +13,13 @@
         (vars (list-of symbol?))
         (exps (list-of expression?))
         (bodies (list-of expression?))]
+  [if-exp
+        (text-exp expression?)
+        (then-exp expression?)
+        (else-exp expression?)]
+  [lambda-exp
+    (ids (list-of symbol?))
+    (bodies (list-of expression?))]
   )
 
 	

@@ -15,27 +15,42 @@
         [var-exp (id)
           (apply-env env 
             id; look up its value.
-            identity-proc
             (lambda (x) x) ; procedure to call if id is in the environment 
-              (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+            (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
                   "variable not found in environment: ~s"
           id)))]
-          
         [app-exp (rator rands)
           (let ([proc-value (eval-exp rator)]
                 [args (eval-rands rands)])
             (apply-proc proc-value args))]
-        [let-exp
-          (vars (list-of symbol?))
-          (exps (list-of expression?))
-          (bodies (list-of expression?))]
+        [let-exp (vars exps bodies)
+          (let ([new-env
+                  (extend-env vars 
+                    (eval-rands exps env)
+                    env)])
+          (eval-bodies bodies new-env))]
+        [if-exp (test-exp then-exp else-exp)
+            (if (eval-exp test-exp env)
+                (eval-exp then-exp env)
+                (eval-exp else-exp env))]
+        [lambda-exp (ids bodies)
+          (closure ids bodies env)]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 ; evaluate the list of operands, putting results into a list
 
 (define eval-rands
-  (lambda (rands)
-    (map eval-exp rands)))
+  (lambda (rands env)
+    (map 
+        (lambda (x) eval-exp x env)
+      rands)))
+
+(define eval-bodies
+  (lambda (bodies env)
+    (if (null? (cdr bodies))
+        (eval-exp (car bodies) env)
+        (begin (eval-exp (car bodies) env)
+                (eval-bodies (cdr bodies) env)))))
 
 ; Apply a procedure to its arguments.
 ; At this point, we only have primitive procedures. 
@@ -45,6 +60,11 @@
   (lambda (proc-value args)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
+      [closure (ids bodies env)
+        (let ([new-env
+            (extend-env id
+                args env)])
+        (eval-bodies bodies new-env))]
 			; You will add other cases
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
