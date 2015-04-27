@@ -9,7 +9,7 @@
     (lambda (x)
       (ormap 
        (lambda (pred) (pred x))
-       (list number? vector? boolean? symbol? string? pair? null?))))]
+       (list list? number? vector? boolean? symbol? string? pair? null?))))]
   [app-exp        ; applications
    (rator expression?)
    (rands (list-of expression?))] 
