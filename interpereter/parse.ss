@@ -110,7 +110,7 @@
  		[app-exp (rator rand) (append (list (unparse-exp rator)) (unparse-exp rand))]))
 
 (define (literal? x)
- 	(or (number? x) (string? x) (symbol? x) (null? x) (vector? x)(equal? #f x) (equal? #t x)))
+ 	(or (number? x) (list? x) (string? x) (symbol? x) (null? x) (vector? x)(equal? #f x) (equal? #t x)))
 
 
 

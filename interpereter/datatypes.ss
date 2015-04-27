@@ -5,11 +5,7 @@
   [var-exp        ; variable references
    (id symbol?)]
   [lit-exp        ; "Normal" data.  Did I leave out any types?
-   (datum
-    (lambda (x)
-      (ormap 
-       (lambda (pred) (pred x))
-       (list list? number? vector? boolean? symbol? string? pair? null?))))]
+   (datum literal?)]
   [app-exp        ; applications
    (rator expression?)
    (rands (list-of expression?))] 
