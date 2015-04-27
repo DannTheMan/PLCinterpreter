@@ -13,10 +13,10 @@
       [lit-exp (datum) datum]
       [var-exp (id)
 				(apply-env init-env id; look up its value.
-      	   (lambda (x) x) ; procedure to call if id is in the environment 
+      	  (lambda (x) x) ; procedure to call if id is in the environment 
            (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
 		          "variable not found in environment: ~s"
-			   id)))] 
+			  id)))] 
       [app-exp (rator rands)
         (let ([proc-value (eval-exp rator)]
               [args (eval-rands rands)])
@@ -29,9 +29,9 @@
   (lambda (rands)
     (map eval-exp rands)))
 
-;  Apply a procedure to its arguments.
-;  At this point, we only have primitive procedures.  
-;  User-defined procedures will be added later.
+; Apply a procedure to its arguments.
+; At this point, we only have primitive procedures.  
+; User-defined procedures will be added later.
 
 (define apply-proc
   (lambda (proc-value args)
@@ -45,9 +45,9 @@
 (define *prim-proc-names* '(+ - * add1 sub1 cons =))
 
 (define init-env         ; for now, our initial global environment only contains 
-  (extend-env            ; procedure names.  Recall that an environment associates
+  (extend-env      ; procedure names. Recall that an environment associates
      *prim-proc-names*   ;  a value (not an expression) with an identifier.
-     (map prim-proc      
+     (map prim-proc   
           *prim-proc-names*)
      (empty-env)))
 
@@ -68,7 +68,7 @@
             "Bad primitive procedure name: ~s" 
             prim-op)])))
 
-(define rep      ; "read-eval-print" loop.
+(define rep   ; "read-eval-print" loop.
   (lambda ()
     (display "--> ")
     ;; notice that we don't save changes to the environment...

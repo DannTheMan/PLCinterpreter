@@ -12,7 +12,7 @@
        (list number? vector? boolean? symbol? string? pair? null?))))]
   [app-exp        ; applications
    (rator expression?)
-   (rands (list-of expression?))]  
+   (rands (list-of expression?))] 
   )
 
 	
@@ -20,8 +20,7 @@
 ; kind of procedure, but more kinds will be added later.
 
 (define-datatype proc-val proc-val?
-  [prim-proc
-   (name symbol?)])
+  [prim-proc (name symbol?)])
 	 
 	 
 	 
@@ -34,6 +33,6 @@
 (define-datatype environment environment?
   (empty-env-record)
   (extended-env-record
-   (syms (list-of symbol?))
-   (vals (list-of scheme-value?))
-   (env environment?)))
+    (syms (list-of symbol?))
+    (vals (list-of scheme-value?))
+    (env environment?)))

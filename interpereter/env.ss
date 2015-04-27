@@ -18,7 +18,7 @@
      ((null? ls) #f)
      ((pred (car ls)) 0)
      (else (let ((list-index-r (list-index pred (cdr ls))))
-	     (if (number? list-index-r)
+	   (if (number? list-index-r)
 		 (+ 1 list-index-r)
 		 #f))))))
 
@@ -29,7 +29,7 @@
         (fail))
       (extended-env-record (syms vals env)
 	(let ((pos (list-find-position sym syms)))
-      	  (if (number? pos)
-	      (succeed (list-ref vals pos))
-	      (apply-env env sym succeed fail)))))))
+      	 (if (number? pos)
+	         (succeed (list-ref vals pos))
+	         (apply-env env sym succeed fail)))))))
 
