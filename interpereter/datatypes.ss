@@ -8,7 +8,11 @@
    (datum literal?)]
   [app-exp        ; applications
    (rator expression?)
-   (rands (list-of expression?))] 
+   (rands (list-of expression?))]
+  [let-exp
+        (vars (list-of symbol?))
+        (exps (list-of expression?))
+        (bodies (list-of expression?))]
   )
 
 	

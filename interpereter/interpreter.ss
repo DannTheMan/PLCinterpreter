@@ -3,25 +3,33 @@
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form)))
+    (eval-exp form
+              (empty-env))))
 
 ; eval-exp is the main component of the interpreter
-
 (define eval-exp
-  (lambda (exp)
-    (cases expression exp
-      [lit-exp (datum) datum]
-      [var-exp (id)
-				(apply-env init-env id; look up its value.
-      	 (lambda (x) x) ; procedure to call if id is in the environment 
-           (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-		          "variable not found in environment: ~s"
-			 id)))] 
-      [app-exp (rator rands)
-        (let ([proc-value (eval-exp rator)]
-              [args (eval-rands rands)])
-          (apply-proc proc-value args))]
-      [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
+  (let ([identity-proc (lambda (x) x)])
+    (lambda (exp env)
+      (cases expression exp
+        [lit-exp (datum) datum]
+        [var-exp (id)
+          (apply-env env 
+            id; look up its value.
+            identity-proc
+            (lambda (x) x) ; procedure to call if id is in the environment 
+              (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+                  "variable not found in environment: ~s"
+          id)))]
+          
+        [app-exp (rator rands)
+          (let ([proc-value (eval-exp rator)]
+                [args (eval-rands rands)])
+            (apply-proc proc-value args))]
+        [let-exp
+          (vars (list-of symbol?))
+          (exps (list-of expression?))
+          (bodies (list-of expression?))]
+        [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 ; evaluate the list of operands, putting results into a list
 
