@@ -19,7 +19,7 @@
         (else-exp expression?)]
   [lambda-exp
     (ids (list-of symbol?))
-    (bodies (list-of expression?))]
+    (body (list-of expression?))]
   )
 
 	
@@ -27,7 +27,11 @@
 ; kind of procedure, but more kinds will be added later.
 
 (define-datatype proc-val proc-val?
-  [prim-proc (name symbol?)])
+  [prim-proc (name symbol?)]
+  [closure
+    (args (list-of symbol?))
+    (body expression?)
+    (env environment?)])
 	 
 	 
 	 

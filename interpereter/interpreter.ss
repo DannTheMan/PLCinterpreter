@@ -20,9 +20,11 @@
                   "variable not found in environment: ~s"
           id)))]
         [app-exp (rator rands)
-          (let ([proc-value (eval-exp rator)]
-                [args (eval-rands rands)])
-            (apply-proc proc-value args))]
+          (let ([proc-value (eval-exp rator env)]
+                [args (eval-rands rands env)])
+          (if (proc-val? proc-value)
+            (apply-proc proc-value args)
+            proc-value))]
         [let-exp (vars exps bodies)
           (let ([new-env
                   (extend-env vars 
