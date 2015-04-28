@@ -21,8 +21,8 @@
         (test-exp expression?)
         (then-exp expression?)]
   [lambda-exp
-    (ids (list-of symbol?))
-    (body (list-of expression?))]
+    (ids list?)
+    (body expression?)]
   )
 
 	

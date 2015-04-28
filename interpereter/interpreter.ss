@@ -148,7 +148,7 @@
       [(newline) (newline)]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
-            prim-op)])))
+            prim-proc)])))
 
 (define rep  ; "read-eval-print" loop.
   (lambda ()

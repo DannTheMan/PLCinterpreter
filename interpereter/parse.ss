@@ -13,7 +13,7 @@
     (cond
 	 [(symbol? datum) (var-exp datum)]
 	 [(or (number? datum) (boolean? datum) (string? datum)
-	 	  (symbol? datum) (null? datum) (vector? datum)) (lit-exp datum)]
+	 	  (null? datum) (vector? datum)) (lit-exp datum)]
      [(pair? datum)
       (cond
 		[(eqv? 'quote (1st datum)) (lit-exp (2nd datum))]
@@ -23,20 +23,9 @@
 					(eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)]
 				[(and (list? (2nd datum))(not (andmap (lambda (x) (symbol? x)) (2nd datum))))
 					(eopl:error 'parse-exp "lambda's formal arguments ~s must all be symbols" (2nd datum))]
-				[(cond
-					[(pair? (2nd datum)) (lambda-improper
-							(get-car-of-pair (2nd datum))
-							(get-last-of-pair (2nd datum))
-							(map parse-exp (cddr datum)))]
-					[(not (list? (2nd datum)))(lambda-single
-							(2nd datum)
-							(map parse-exp (cddr datum)))]
-					[(> (length datum) 3) (lambda-multi-bodies-exp
-							(2nd datum)
-							(map parse-exp (cddr datum)))]
-					[else(lambda-exp 
+				[else(lambda-exp 
 						(2nd datum)
-						(parse-exp (3rd datum)))])])]
+						(parse-exp (3rd datum)))])]
 		[(eqv? 'let (1st datum))
 			(cond
 				[(null? (cddr datum))
