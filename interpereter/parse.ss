@@ -23,9 +23,13 @@
 					(eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)]
 				[(and (list? (2nd datum))(not (andmap (lambda (x) (symbol? x)) (2nd datum))))
 					(eopl:error 'parse-exp "lambda's formal arguments ~s must all be symbols" (2nd datum))]
-				[else(lambda-exp 
+				[(= (length datum) 3) (lambda-exp 
 						(2nd datum)
-						(parse-exp (3rd datum)))])]
+						(parse-exp (3rd datum)))]
+				[else (lambda-sym-exp
+						(2nd datum)
+						(parse-exp (3rd datum))
+						(4th datum))])]
 		[(eqv? 'let (1st datum))
 			(cond
 				[(null? (cddr datum))

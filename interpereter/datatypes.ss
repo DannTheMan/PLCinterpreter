@@ -23,6 +23,10 @@
   [lambda-exp
     (ids list?)
     (body expression?)]
+  [lambda-sym-exp
+    (syms (list-of symbol?))
+    (body (list-of expression?))
+    (vals (list-of number?))]
   )
 
 	
