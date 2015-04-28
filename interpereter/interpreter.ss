@@ -41,6 +41,9 @@
                 (eval-exp then-exp env))]
         [lambda-exp (ids bodies)
           (closure ids bodies env)]
+        [lambda-improper (args arg bodies) (improper-closure args  arg bodies env)]
+        [lambda-single (arg bodies) (single-arg-closure arg bodies env)]
+        [lambda-multi-bodies-exp (args body) (multi-body-closure args body env)]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 ; evaluate the list of operands, putting results into a list
@@ -71,10 +74,28 @@
             (extend-env ids
                 args env)])
         (eval-bodies bodies new-env))]
+      [multi-body-closure (vars bodies env)
+        (eval-last bodies (extend-env vars args env))]
+      [single-arg-closure (var bodies env)
+        (last (map (lambda (x) (eval-exp x  (extend-env (list var) (list args) env))) bodies))]
+      [improper-closure   (vars var body env ) 
+        (last (map (lambda (x) (eval-exp x (extend-env (append vars (list var)) (correct-args vars args) env))) body))]
 			; You will add other cases
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
+
+(define (eval-last bodies env)
+  (if (null? (cdr bodies))
+    (eval-exp (car bodies) env)
+    (begin (eval-exp (car bodies) env)
+         (eval-last (cdr bodies) env))))
+
+(define (correct-args vars args)
+  (if (null? vars)
+    (list args)
+    (append (list (1st args)) (correct-args (cdr vars) (cdr args)))))
+
 
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not = < <= > >= cons car cdr
                             caar cadr cdar cddr caaar caadr cadar cdaar caddr

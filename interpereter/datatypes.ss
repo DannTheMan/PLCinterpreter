@@ -23,6 +23,17 @@
   [lambda-exp
     (ids list?)
     (body expression?)]
+  [lambda-multi-bodies-exp
+    (args list?)
+    (body (list-of expression?))]
+  [lambda-single
+    (arg symbol?)
+    (body (list-of expression?))]
+  [lambda-improper
+    (args list?)
+    (arg symbol?)
+    (body (list-of expression?))]
+
   [lambda-sym-exp
     (syms (list-of symbol?))
     (body (list-of expression?))
@@ -38,6 +49,19 @@
   [closure
     (args (list-of symbol?))
     (body expression?)
+    (env environment?)]
+  [multi-body-closure
+    (args (list-of symbol?))
+    (body (list-of expression?))
+    (env environment?)]
+  [single-arg-closure
+    (arg symbol?)
+    (body (list-of expression?))
+    (env environment?)]
+  [improper-closure
+    (args (list-of symbol?))
+    (arg symbol?)
+    (body (list-of expression?))
     (env environment?)])
 	 
 	 
