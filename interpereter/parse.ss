@@ -121,8 +121,8 @@
 (define (unparse-exp exp)
 	(cases expression exp
 		[var-exp (id) id]
-		[lambda-exp (id body) (append (list 'lambda) 
- 			(append (list (unparse-exp id)) (unparse-exp body)))]
+		[lambda-exp (ids body) (append (list 'lambda) 
+ 			(append (list (unparse-exp ids)) (unparse-exp body)))]
 		[lit-exp (id) id]
  		[let-exp (args body) (append (list 'let (map unparse-exp args)) (unparse-exp body))]
  		[let*-exp (args body) (append (list 'let* (map unparse-exp args)) (unparse-exp body))]

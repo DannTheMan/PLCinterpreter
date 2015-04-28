@@ -68,7 +68,7 @@
       [prim-proc (op) (apply-prim-proc op args)]
       [closure (ids bodies env)
         (let ([new-env
-            (extend-env id
+            (extend-env ids
                 args env)])
         (eval-bodies bodies new-env))]
 			; You will add other cases
@@ -134,7 +134,7 @@
       [(list->vector) (list->vector (1st args))]
       [(list?) (list? (1st args))]
       [(pair?) (pair? (1st args))]
-      [(procedure?) (proc-val? (1st-args))]
+      [(procedure?) (proc-val? (1st args))]
       [(vector->list) (vector->list (1st args))]
       [(vector) (apply vector args)]
       [(make-vector) (apply make-vector args)]
