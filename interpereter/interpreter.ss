@@ -48,8 +48,8 @@
 (define eval-rands
   (lambda (rands env)
     (map 
-        (lambda (x) eval-exp x env)
-      rands)))
+        (lambda (x) (eval-exp x env))
+          rands)))
 
 (define eval-bodies
   (lambda (bodies env)
