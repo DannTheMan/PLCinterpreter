@@ -91,6 +91,13 @@
     (begin (eval-exp (car bodies) env)
          (eval-last (cdr bodies) env))))
 
+(define last
+  (lambda (ls)
+    (if (not (null? (ls)))
+      (if (null? (cdr ls))
+        (car ls)
+        (last (cdr ls))))))
+
 (define (correct-args vars args)
   (if (null? vars)
     (list args)
@@ -168,11 +175,34 @@
       [(vector-set!) (vector-set! (1st args) (2nd args) (3rd args))]
       [(display) (display (1st args))]
       [(newline) (newline)]
-      [(map) (map (apply-proc (1st args)) (cdr args))]
+      [(map) (map-prim (1st args) (cdr args))]
       [(apply) (apply-proc (1st args) (2nd args))]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-proc)])))
+
+(define map-prim
+  (lambda (fn ls . adt)
+    (if (null? adt)
+      [let map-noadt ((ls (car ls)))
+        (if (null? ls)
+          '()
+          (cons (apply-proc fn (list (car ls)))
+                (map-noadt (cdr ls))))]
+      [let map-adt ((ls (car ls)) (adt adt))
+        (if (null? ls)
+          '()
+          (cons (apply-proc fn (list (car ls)) (map-prim car adt))
+                (map-prim (cdr ls)
+                          (map-prim cdr adt))))])))
+
+(define build-args-list
+  (lambda (args)
+    (if (null? args)
+      '()
+      (if (null? (cdr args))
+        (car args)
+        (cons (car args) (build-args-list))))))
 
 (define rep  ; "read-eval-print" loop.
   (lambda ()
