@@ -110,9 +110,11 @@
 				(map parse-exp (cddr datum)))]
 		[(eqv? 'case  (1st datum))(case-exp
 			(parse-exp (2nd datum))
-			(remove-last (map (lambda (x) (1st x)) (cddr datum)))
-			(remove-last (map (lambda (x) (parse-exp (2nd x))) (cddr datum)))
-			(parse-exp (last (cddr datum))))]
+				(map (lambda (x)
+					(if (eqv? (1st x) 'else)
+						(else-exp (map parse-exp (cdr x)))
+						(list (1st x) (map parse-exp (cdr x)))))
+				(cddr datum)))]
 		[(eqv? 'begin (1st datum))
 			(begin-exp 
 				(map parse-exp (cdr datum)))]
@@ -175,6 +177,7 @@
 		(cases expression exp
 			[case-exp (key clauses) (case-helper key clauses)]
 			;[cond-exp exp]
+			[else-exp (bodies) (app-exp (lambda-exp '() (map syntax-expand bodies)) '())]
 			[else exp])))
 
 (define case-helper
@@ -185,5 +188,5 @@
 				(if (expression? x)
 					(syntax-expand (car clauses))
 					(let ([y (list (lit-exp (1st x)) key)])
-						(if-exp (app-exp (var-exp 'contains?) y) (syntax-expand (begin-exp (2nd x))) (syntax-case-helper key (cdr clauses)))))))))
+						(if-exp (app-exp (var-exp 'contains?) y) (syntax-expand (begin-exp (2nd x))) (case-helper key (cdr clauses)))))))))
 

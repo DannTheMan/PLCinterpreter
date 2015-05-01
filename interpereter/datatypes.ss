@@ -20,6 +20,8 @@
   [if-exp-no-else
         (test-exp expression?)
         (then-exp expression?)]
+  [else-exp
+    (bodies (list-of expression?))]
   [while-exp
     (test-exp expression?)
     (body (list-of expression?))]
