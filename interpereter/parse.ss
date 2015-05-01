@@ -174,6 +174,16 @@
 	(lambda (exp)
 		(cases expression exp
 			[case-exp (key clauses) (case-helper key clauses)]
-			[cond-exp exp]
+			;[cond-exp exp]
 			[else exp])))
+
+(define case-helper
+	(lambda (key clauses)
+		(if (null? clauses) 
+			(void)
+			(let ([x (car clauses)])
+				(if (expression? x)
+					(syntax-expand (car clauses))
+					(let ([y (list (lit-exp (1st x)) key)])
+						(if-exp (app-exp (var-exp 'contains?) y) (syntax-expand (begin-exp (2nd x))) (syntax-case-helper key (cdr clauses)))))))))
 
