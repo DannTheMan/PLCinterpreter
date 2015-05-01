@@ -173,7 +173,7 @@
 (define syntax-expand
 	(lambda (exp)
 		(cases expression exp
-			[case-exp exp]
+			[case-exp (key clauses) (case-helper key clauses)]
 			[cond-exp exp]
 			[else exp])))
 
