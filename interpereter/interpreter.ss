@@ -91,9 +91,12 @@
       [multi-body-closure (vars bodies env)
         (eval-last bodies (extend-env vars args env))]
       [single-arg-closure (var bodies env)
-        (last (map (lambda (x) (eval-exp x  (extend-env (list var) (list args) env))) bodies))]
+        (eval-last bodies (extend-env (list var) (list args) env))]
       [improper-closure   (vars var body env ) 
-        (last (map (lambda (x) (eval-exp x (extend-env (append vars (list var)) (correct-args vars args) env))) body))]
+        (if (null? vars)
+          (last (eval-exp body (extend-env (append vars (list var)) (correct-args vars args) env)))
+          (eval-last body (extend-env (append vars (list var)) (correct-args vars args) env)))]
+
 			; You will add other cases
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
