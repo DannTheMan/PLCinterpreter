@@ -102,7 +102,7 @@
                             cdadr cddar cdddr list null? assq eq? equal? atom?
                             length list->vector list? pair? procedure? vector->list
                             vector make-vector vector-ref vector? number? symbol?
-                            set-car! set-cdr! vector-set! display newline))
+                            set-car! set-cdr! vector-set! display newline map))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env   ; procedure names. Recall that an environment associates
@@ -168,6 +168,7 @@
       [(vector-set!) (vector-set! (1st args) (2nd args) (3rd args))]
       [(display) (display (1st args))]
       [(newline) (newline)]
+      [(map) (map (apply-prim-proc (1st args)) (cdr args))]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-proc)])))
