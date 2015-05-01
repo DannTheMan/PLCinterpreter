@@ -44,6 +44,8 @@
         [lambda-improper (args arg bodies) (improper-closure args  arg bodies env)]
         [lambda-single (arg bodies) (single-arg-closure arg bodies env)]
         [lambda-multi-bodies-exp (args body) (multi-body-closure args body env)]
+        [while-exp (test-exp body) (eval-exp-while test-exp body env)]
+        [begin-exp (body) (eval-bodies body env)]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
 ; evaluate the list of operands, putting results into a list
@@ -60,6 +62,18 @@
         (eval-exp (car bodies) env)
         (begin (eval-exp (car bodies) env)
                 (eval-bodies (cdr bodies) env)))))
+
+(define eval-exp-while
+  (lambda (test bodies env)
+    (letrec ([helper (lambda (test entire-body rest env)
+      (if (null? (cdr rest))
+        (begin (eval-exp (car rest) env)
+               (if (not (equal? #f (eval-exp test env)))
+                   (helper test entire-body entire-body env)))
+        (begin (eval-exp (car rest) env)
+               (helper test entire-body (cdr rest) env))))])
+    (if (not (equal? #f (eval-exp test env)))
+      (helper test bodies bodies env)))))
 
 ; Apply a procedure to its arguments.
 ; At this point, we only have primitive procedures. 
@@ -110,7 +124,7 @@
                             length list->vector list? pair? procedure? vector->list
                             vector make-vector vector-ref vector? number? symbol?
                             set-car! set-cdr! vector-set! display newline map apply
-                            or and))
+                            or and quotient))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env   ; procedure names. Recall that an environment associates
@@ -176,6 +190,7 @@
       [(vector-set!) (vector-set! (1st args) (2nd args) (3rd args))]
       [(display) (display (1st args))]
       [(newline) (newline)]
+      [(quotient) (apply quotient args)]
       [(map) (map-prim (1st args) (cdr args))]
       [(apply) (apply-proc (1st args) (2nd args))]
       [(or) (if (null? args) #f

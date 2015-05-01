@@ -20,6 +20,11 @@
   [if-exp-no-else
         (test-exp expression?)
         (then-exp expression?)]
+  [while-exp
+    (test-exp expression?)
+    (body (list-of expression?))]
+  [begin-exp
+    (bodies (list-of expression?))]
   [lambda-exp
     (ids list?)
     (body expression?)]
@@ -33,7 +38,6 @@
     (args list?)
     (arg symbol?)
     (body (list-of expression?))]
-
   [lambda-sym-exp
     (syms (list-of symbol?))
     (body (list-of expression?))

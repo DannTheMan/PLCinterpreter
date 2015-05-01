@@ -104,14 +104,18 @@
 				(remove-last (map (lambda (x) (parse-exp (1st x))) (cdr datum)))
 				(remove-last (map (lambda (x) (parse-exp (2nd x))) (cdr datum)))
 				(last (map (lambda (x) (if (eqv? 'else (1st x)) (parse-exp (2nd x))))  (cdr datum))))]
-		[(eqv? 'while (1st datum))(while-exp 
-			(parse-exp (2nd datum))
-			(map parse-exp (cddr datum)))]
+		[(eqv? 'while (1st datum))
+			(while-exp 
+				(parse-exp (2nd datum))
+				(map parse-exp (cddr datum)))]
 		[(eqv? 'case  (1st datum))(case-exp
 			(parse-exp (2nd datum))
 			(remove-last (map (lambda (x) (1st x)) (cddr datum)))
 			(remove-last (map (lambda (x) (parse-exp (2nd x))) (cddr datum)))
 			(parse-exp (last (cddr datum))))]
+		[(eqv? 'begin (1st datum))
+			(begin-exp 
+				(map parse-exp (cdr datum)))]
        [else (if (not (list? datum))
 			(eopl:error 'parse-exp "Error in parse-exp: application ~s is not a proper list" datum)
 			(app-exp (parse-exp (1st datum)) 
@@ -149,7 +153,8 @@
 	 			(unparse-exp then)
 	 			(unparse-exp else)))]
  		[set!-exp (id value) (list 'set! id value)]
- 		[app-exp (rator rand) (append (list (unparse-exp rator)) (unparse-exp rand))]))
+ 		[app-exp (rator rand) (append (list (unparse-exp rator)) (unparse-exp rand))]
+ 		[while-exp (test-exp body) (cons (unparse-exp test-exp) (map unparse-exp body))]))
 
 (define (literal? x)
  	(or (number? x) (list? x) (string? x) (symbol? x) (null? x) (vector? x)(equal? #f x) (equal? #t x)))
