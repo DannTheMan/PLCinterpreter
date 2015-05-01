@@ -25,6 +25,9 @@
     (body (list-of expression?))]
   [begin-exp
     (bodies (list-of expression?))]
+  [case-exp
+    (key expression?)
+    (clauses list?)]
   [lambda-exp
     (ids list?)
     (body expression?)]
