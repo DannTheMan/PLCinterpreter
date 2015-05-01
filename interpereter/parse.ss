@@ -164,6 +164,16 @@
 
 
 
+;-----------------------+
+;                       |
+;   SYNTAX EXPANSION    |
+;                       |
+;-----------------------+
 
-
+(define syntax-expand
+	(lambda (exp)
+		(cases expression exp
+			[case-exp exp]
+			[cond-exp exp]
+			[else exp])))
 
