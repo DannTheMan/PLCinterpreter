@@ -29,7 +29,13 @@
     (bodies (list-of expression?))]
   [case-exp
     (key expression?)
-    (clauses list?)]
+    (conds (list-of list?))
+    (bodies (list-of expression?))
+    (else-clause expression?)]
+  [cond-exp
+    (conds (list-of expression?))
+    (bodies (list-of expression?))
+    (else expression?)]
   [lambda-exp
     (ids list?)
     (body expression?)]

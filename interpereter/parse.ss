@@ -100,21 +100,23 @@
 					(2nd datum)
 					(parse-exp (3rd datum)))])]
 		[(eqv? 'cond (1st datum))
-			(cond-exp 
-				(remove-last (map (lambda (x) (parse-exp (1st x))) (cdr datum)))
-				(remove-last (map (lambda (x) (parse-exp (2nd x))) (cdr datum)))
-				(last (map (lambda (x) (if (eqv? 'else (1st x)) (parse-exp (2nd x))))  (cdr datum))))]
+			(if (null? (cddr datum))
+				(cond-exp 	(list (lit-exp #f))
+							(list (lit-exp #f))
+						    (parse-exp (2nd (2nd datum))))
+				(cond-exp 
+					(remove-last (map (lambda (x) (parse-exp (1st x))) (cdr datum)))
+					(remove-last (map (lambda (x) (parse-exp (2nd x))) (cdr datum)))
+					(last (map (lambda (x) (if (eqv? 'else (1st x)) (parse-exp (2nd x))))  (cdr datum)))))]
 		[(eqv? 'while (1st datum))
 			(while-exp 
 				(parse-exp (2nd datum))
 				(map parse-exp (cddr datum)))]
 		[(eqv? 'case  (1st datum))(case-exp
 			(parse-exp (2nd datum))
-				(map (lambda (x)
-					(if (eqv? (1st x) 'else)
-						(else-exp (map parse-exp (cdr x)))
-						(list (1st x) (map parse-exp (cdr x)))))
-				(cddr datum)))]
+			(remove-last (map (lambda (x) (1st x)) (cddr datum)))
+			(remove-last (map (lambda (x) (parse-exp (2nd x))) (cddr datum)))
+			(parse-exp (last (cddr datum))))]
 		[(eqv? 'begin (1st datum))
 			(begin-exp 
 				(map parse-exp (cdr datum)))]
@@ -175,10 +177,43 @@
 (define syntax-expand
 	(lambda (exp)
 		(cases expression exp
-			[case-exp (key clauses) (case-helper key clauses)]
-			;[cond-exp exp]
+			[let-exp (vars exps body)
+				(let-exp 
+					vars
+					(map syntax-expand exps)
+					(map syntax-expand body))]
+			[cond-exp (conds bodies else-clause)
+				(if (null? (cdr conds))
+					(if-exp (syntax-expand (car conds))
+							(syntax-expand (car bodies))
+							(syntax-expand else-clause))
+					(if-exp (syntax-expand (car conds))
+							(syntax-expand (car bodies))
+							(syntax-expand (cond-exp (cdr conds)
+													 (cdr bodies)
+													 else-clause))))]
+			[case-exp (key conds bodies else-clause)
+				(if (null? conds)
+					(syntax-expand (caaddr else-clause))
+					(let ([a (case-to-cond (syntax-expand key) (1st conds) (1st bodies))])
+						(syntax-expand (cond-exp
+							(map (lambda (x) (1st x)) a)
+							(map (lambda (x) (2nd x)) a)
+							(syntax-expand (case-exp key (cdr conds) 
+													(cdr bodies) else-clause))))))]
+			;[case-exp (key clauses) (case-helper key clauses)] ;deprecated
 			[else-exp (bodies) (app-exp (lambda-exp '() (map syntax-expand bodies)) '())]
 			[else exp])))
+
+(define (case-to-cond case cases body)
+	(if (null? cases)
+		'()
+		(append 
+			(list (list 
+				(app-exp (var-exp 'equal?) (list  case (lit-exp (car cases))))
+				(syntax-expand body)))
+			(case-to-cond case (cdr cases) body))))
+
 
 (define case-helper
 	(lambda (key clauses)

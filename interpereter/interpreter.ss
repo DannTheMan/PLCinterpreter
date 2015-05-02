@@ -110,10 +110,7 @@
 
 (define last
   (lambda (ls)
-    (if (not (null? (ls)))
-      (if (null? (cdr ls))
-        (car ls)
-        (last (cdr ls))))))
+    (car (reverse ls))))
 
 (define (correct-args vars args)
   (if (null? vars)
