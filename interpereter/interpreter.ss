@@ -32,6 +32,10 @@
                     (eval-rands exps env)
                     env)])
           (eval-bodies bodies new-env))]
+        [letrec-exp (proc-names idss bodies letrec-body)
+          (eval-exp letrec-body
+            (extend-env-recursive
+                proc-names idss bodies env))]
         [if-exp (test-exp then-exp else-exp)
             (if (eval-exp test-exp env)
                 (eval-exp then-exp env)

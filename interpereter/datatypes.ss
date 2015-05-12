@@ -106,15 +106,5 @@
   (recursively-extended-env-record
     (proc-names (list-of symbol?))
     (idss (list-of (list-of symbol?)))
-    (bodies (list-of box?))
-    (env environment?))
-  (global-env-record
-    (syms (list-of symbol?))
-    (vals (list-of scheme-value?))))
-
-
-(define-datatype lambda-args lambda-args?
-  [ref-arg 
-    (arg symbol?)]
-  [var-arg 
-    (arg symbol?)])
+    (bodies (list-of expression?))
+    (env environment?)))

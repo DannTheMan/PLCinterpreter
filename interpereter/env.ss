@@ -11,7 +11,7 @@
 (define extend-env-recursive
   (lambda (proc-names idss bodies old-env)
     (recursively-extended-env-record
-      proc-names idss (map box bodies) old-env)))
+      proc-names idss bodies old-env)))
 
 (define list-find-position
   (lambda (sym los)
@@ -36,7 +36,7 @@
         (let ([pos (list-find-position sym procnames)])
           (if (number? pos)
               (apply-proc (closure (list-ref idss pos)
-                                    (list-ref (map unbox bodies) pos) env) idss)
+                                    (list-ref bodies pos) env) idss)
             (apply-env old-env sym succeed fail))))
       (extended-env-record (syms vals env)
       	(let ((pos (list-find-position sym syms)))
