@@ -80,10 +80,10 @@
 				[(not (andmap (lambda (x) (symbol? (car x))) (2nd datum)))
 					(eopl:error 'parse-exp "vars in letrec-exp must be symbols ~s" datum)]
 				[else (letrec-exp 
-						(map car (2nd datum))
-						(map 2nd (map (lambda (x) (2nd x)) (2nd datum)))
-						(map (lambda (x) (parse-exp (2nd x))) (2nd datum))
-						(parse-exp (3rd datum)))])]
+						(car (apply map list (cadr datum)))
+						(map cadr (map cadr (cadr datum))) 
+						(map parse-exp (map caddr (map cadr (cadr datum)))) 
+						(parse-exp (caddr datum)))])]
 		[(eqv? 'if (1st datum)) 
 			(cond 
 			[(or (null? (cddr datum)) (null? (cdr datum)))
@@ -218,14 +218,17 @@
 			;[case-exp (key clauses) (case-helper key clauses)] ;deprecated
 			[else-exp (bodies) (app-exp (lambda-exp '() (map syntax-expand bodies)) '())]
 			[letrec-exp (args idss exps body) 
-				(letrec-exp args idss (map syntax-expand exps) 
-									(syntax-expand body))]
+				(letrec-exp 
+					args 
+					idss 
+					(map syntax-expand exps) 
+					(syntax-expand body))]
 			[named-let-exp (name args exps body)
-				(letrec-exp
+				(app-exp (letrec-exp
 					(list name)
 					(list args)
-					(list (lambda-multi-bodies-exp args body))
-					(app-exp (lambda-multi-bodies-exp args body) (map syntax-expand exps)))]
+					(map syntax-expand body)
+					(parse-exp name)) exps)]
 			[else exp])))
 
 (define (case-to-cond case cases body)
