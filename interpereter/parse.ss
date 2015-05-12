@@ -205,6 +205,14 @@
 													(cdr bodies) else-clause))))))]
 			;[case-exp (key clauses) (case-helper key clauses)] ;deprecated
 			[else-exp (bodies) (app-exp (lambda-exp '() (map syntax-expand bodies)) '())]
+			[letrec-exp (args idss exps body) (letrec-exp args idss (map syntax-expand exps) 
+									(syntax-expand body))]
+			[named-let-exp (name args exps body)
+				(letrec-exp
+					(list name)
+					(list args)
+					(list (lambda-multi-bodies-exp (map var-arg args) (map syntax-expand body)))
+					(app-exp (lambda-multi-bodies-exp (map var-arg args) (map syntax-expand body)) (map syntax-expand exps)))]
 			[else exp])))
 
 (define (case-to-cond case cases body)

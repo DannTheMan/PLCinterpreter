@@ -103,3 +103,10 @@
     (syms (list-of symbol?))
     (vals (list-of scheme-value?))
     (env environment?)))
+
+
+(define-datatype lambda-args lambda-args?
+  [ref-arg 
+    (arg symbol?)]
+  [var-arg 
+    (arg symbol?)])
