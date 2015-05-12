@@ -8,6 +8,11 @@
   (lambda (syms vals env)
     (extended-env-record syms vals env)))
 
+(define extend-env-recursive
+  (lambda (proc-names idss bodies old-env)
+    (recursively-extended-env-record
+      proc-names idss (map box bodies) old-env)))
+
 (define list-find-position
   (lambda (sym los)
     (list-index (lambda (xsym) (eqv? sym xsym)) los)))
@@ -27,9 +32,15 @@
     (cases environment env
       (empty-env-record ()
         (fail))
+      (recursively-extended-env-record (procnames idss bodies old-env)
+        (let ([pos (list-find-position sym procnames)])
+          (if (number? pos)
+              (apply-proc (closure (list-ref idss pos)
+                                    (list-ref (map unbox bodies) pos) env) idss)
+            (apply-env old-env sym succeed fail))))
       (extended-env-record (syms vals env)
-	(let ((pos (list-find-position sym syms)))
-      	 (if (number? pos)
-	         (succeed (list-ref vals pos))
-	         (apply-env env sym succeed fail)))))))
+      	(let ((pos (list-find-position sym syms)))
+            	 (if (number? pos)
+      	         (succeed (list-ref vals pos))
+      	         (apply-env env sym succeed fail)))))))
 
