@@ -10,9 +10,19 @@
    (rator expression?)
    (rands (list-of expression?))]
   [let-exp
-        (vars (list-of symbol?))
-        (exps (list-of expression?))
-        (bodies (list-of expression?))]
+    (vars (list-of symbol?))
+    (exps (list-of expression?))
+    (bodies (list-of expression?))]
+  [named-let-exp
+    (name symbol?)
+    (args (list-of symbol?))
+    (exps (list-of expression?))
+    (body (list-of expression?))]
+  [letrec-exp
+    (proc-names (list-of symbol?))
+    (idss (list-of (list-of symbol?)))
+    (bodies (list-of expression?))
+    (letrec-body expression?)]
   [if-exp
         (text-exp expression?)
         (then-exp expression?)
@@ -35,7 +45,7 @@
   [cond-exp
     (conds (list-of expression?))
     (bodies (list-of expression?))
-    (else expression?)]
+    (else-exp expression?)]
   [lambda-exp
     (ids list?)
     (body expression?)]
