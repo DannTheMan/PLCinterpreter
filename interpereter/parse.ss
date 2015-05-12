@@ -44,7 +44,7 @@
 				[(null? (cddr datum))
 					(eopl:error 'parse-exp "let-expression has incorrect length ~s" datum)]
 				[(symbol? (2nd datum))
-					(named-let (2nd datum)(map car (3rd datum)) (map (lambda (x) (parse-exp (2nd x))) (3rd datum)) (map parse-exp (cdddr datum)))]
+					(named-let-exp (2nd datum)(map car (3rd datum)) (map (lambda (x) (parse-exp (2nd x))) (3rd datum)) (map parse-exp (cdddr datum)))]
 				[(not (or (list? (2nd datum)) (null?(2nd datum))))
 					(eopl:error 'parse-exp "declarations in let-expression not a list ~s" datum)]	
 				[(not (andmap (lambda (x) (list? x)) (2nd datum))) 
@@ -79,7 +79,11 @@
 					(eopl:error 'parse-exp "declaration in letrec-exp must be a list of length 2 ~s" datum)]
 				[(not (andmap (lambda (x) (symbol? (car x))) (2nd datum)))
 					(eopl:error 'parse-exp "vars in letrec-exp must be symbols ~s" datum)]
-				[else (letrec-exp (map parse-exp (2nd datum)) (parse-exp (cddr datum)))])]
+				[else (letrec-exp 
+						(map car (2nd datum))
+						(map 2nd (map (lambda (x) (2nd x)) (2nd datum)))
+						(map (lambda (x) (parse-exp (2nd x))) (2nd datum))
+						(parse-exp (3rd datum)))])]
 		[(eqv? 'if (1st datum)) 
 			(cond 
 			[(or (null? (cddr datum)) (null? (cdr datum)))
@@ -203,16 +207,25 @@
 							(map (lambda (x) (2nd x)) a)
 							(syntax-expand (case-exp key (cdr conds) 
 													(cdr bodies) else-clause))))))]
+			[lambda-exp (args body)
+				(lambda-exp	args (syntax-expand body))]
+			[lambda-multi-bodies-exp (args body)
+				(lambda-multi-bodies-exp args (map syntax-expand body))]
+			[lambda-single (arg body)
+				(lambda-single arg (map syntax-expand body))]
+			[lambda-improper (args arg body)
+				(lambda-improper args arg (map syntax-expand body))]
 			;[case-exp (key clauses) (case-helper key clauses)] ;deprecated
 			[else-exp (bodies) (app-exp (lambda-exp '() (map syntax-expand bodies)) '())]
-			[letrec-exp (args idss exps body) (letrec-exp args idss (map syntax-expand exps) 
+			[letrec-exp (args idss exps body) 
+				(letrec-exp args idss (map syntax-expand exps) 
 									(syntax-expand body))]
 			[named-let-exp (name args exps body)
 				(letrec-exp
 					(list name)
 					(list args)
-					(list (lambda-multi-bodies-exp (map var-arg args) (map syntax-expand body)))
-					(app-exp (lambda-multi-bodies-exp (map var-arg args) (map syntax-expand body)) (map syntax-expand exps)))]
+					(list (lambda-multi-bodies-exp args body))
+					(app-exp (lambda-multi-bodies-exp args body) (map syntax-expand exps)))]
 			[else exp])))
 
 (define (case-to-cond case cases body)
