@@ -44,7 +44,7 @@
 				[(null? (cddr datum))
 					(eopl:error 'parse-exp "let-expression has incorrect length ~s" datum)]
 				[(symbol? (2nd datum))
-					(named-let (2nd datum)(map car (3rd datum)) (map (lambda (x) (parse-exp (2nd x))) (3rd datum)) (map parse-exp (cdddr datum)))]
+					(named-let-exp (2nd datum)(map car (3rd datum)) (map (lambda (x) (parse-exp (2nd x))) (3rd datum)) (map parse-exp (cdddr datum)))]
 				[(not (or (list? (2nd datum)) (null?(2nd datum))))
 					(eopl:error 'parse-exp "declarations in let-expression not a list ~s" datum)]	
 				[(not (andmap (lambda (x) (list? x)) (2nd datum))) 
