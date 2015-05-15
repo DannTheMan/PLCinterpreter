@@ -4,38 +4,36 @@
 (define-datatype expression expression?
   [var-exp        ; variable references
    (id symbol?)]
-
   [lit-exp        ; "Normal" data.  Did I leave out any types?
    (datum literal?)]
-
   [app-exp        ; applications
    (rator expression?)
    (rands (list-of expression?))]
-
   [let-exp
     (vars (list-of symbol?))
     (exps (list-of expression?))
     (bodies (list-of expression?))]
-
   [named-let-exp
     (name symbol?)
     (args (list-of symbol?))
     (exps (list-of expression?))
     (body (list-of expression?))]
+  [let*-exp
+    (args (list-of symbol?)
+    (exps (list-of expression?))
+    (body (list-of expression?)))]
   [letrec-exp
     (proc-names (list-of symbol?))
     (idss (list-of (list-of symbol?)))
     (bodies (list-of expression?))
-    (letrec-body (list-of expression?))]
+    (letrec-body expression?)]
   [if-exp
-        (text-exp expression?)
+        (test-exp expression?)
         (then-exp expression?)
         (else-exp expression?)]
   [if-exp-no-else
         (test-exp expression?)
         (then-exp expression?)]
-  [else-exp
-    (bodies (list-of expression?))]
   [while-exp
     (test-exp expression?)
     (body (list-of expression?))]
@@ -54,7 +52,7 @@
     (ids list?)
     (body expression?)]
   [lambda-multi-bodies-exp
-    (args list?)
+    (args (list-of symbol?))
     (body (list-of expression?))]
   [lambda-single
     (arg symbol?)
@@ -63,16 +61,18 @@
     (args list?)
     (arg symbol?)
     (body (list-of expression?))]
+
   [lambda-sym-exp
     (syms (list-of symbol?))
     (body (list-of expression?))
     (vals (list-of number?))]
+
   [set!-exp
-    (variable symbol?)
-    (new-val expression?)]
+    (id symbol?)
+    (value expression?)]
   [define-exp
-    (new-variable symbol?)
-    (new-val expression?)]
+    (var symbol?)
+    (val expression?)]
   [quote-exp
     (args scheme-value?)]
   )
@@ -82,10 +82,11 @@
 ; kind of procedure, but more kinds will be added later.
 
 (define-datatype proc-val proc-val?
-  [prim-proc (name symbol?)]
+  [prim-proc 
+    (name symbol?)]
   [closure
-    (args sym-or-ls?)
-    (body exp-or-ls?)
+    (args (list-of symbol?))
+    (body expression?)
     (env environment?)]
   [multi-body-closure
     (args (list-of symbol?))
@@ -100,16 +101,8 @@
     (arg symbol?)
     (body (list-of expression?))
     (env environment?)]
-  [applied-continuation
+  [continuation-proc
     (k continuation?)])
-	 
-	(define sym-or-ls?
-    (lambda (x)
-      (or (symbol? x) (list-of symbol? x))))
-
-  (define exp-or-ls?
-    (lambda (x)
-      (or (expression? x) ((list-of expression?) x))))
 	 
 	
 ;; environment type definitions
@@ -120,42 +113,58 @@
 (define-datatype environment environment?
   [empty-env-record]
   [extended-env-record
-    (syms improper-or-regular)
-    (vals (list-of box?))
+    (syms (list-of symbol?))
+    (vals (list-of scheme-value?))
     (env environment?)]
   [recursively-extended-env-record
     (proc-names (list-of symbol?))
     (idss (list-of (list-of symbol?)))
     (bodies (list-of expression?))
-    (old-env environment?)])
-
-(define improper?
-  (lambda (x)
-    (and (not (list? x)) (pair? x))))
-
-(define improper-or-regular
-  (lambda (x)
-    (or ((list-of symbol?) x) (improper? x))))
+    (old-env environment?)]
+  [global-env-record
+    (syms (list-of symbol?))
+    (vals (list-of scheme-value?))])
 
 ;Continuation Datatype
 
 (define-datatype continuation continuation?
-  [test-k 
+  [if-k 
     (then-exp expression?)
-  (else-exp expression?)
-  (env environment?)
-  (k continuation?)]
-  [rator-k
+    (else-exp expression?)
+    (env environment?)
+    (k continuation?)]
+  [if-no-else-k 
+    (then-exp expression?)
+    (env environment?)
+    (k continuation?)]
+  [while-k
+    (bodies (list-of expression?))
+    (loop expression?)
+    (env environment?)
+    (k continuation?)]
+  [rator-k 
     (rands (list-of expression?))
-  (env environment?)
-  (k continuation?)]
-  
+    (env environment?)
+    (k continuation?)]
   [rands-k
     (proc-value scheme-value?)
-  (k continuation?)]
-  [test-no-else-k
-    (then-exp expression?)
-  (env environment?)
-  (k continuation?)]
+    (k continuation?)]
+  [set!-k
+    (var symbol?)
+    (env environment?)
+    (k continuation?)]
+  [define-k
+    (var symbol?)
+    (k continuation?)]
+  [eval-rands-k
+    (rands list?)
+    (args list?)
+    (env environment?)
+    (k continuation?)]
+  [eval-last-k
+    (bodies list?)
+    (env environment?)
+    (k continuation?)]
+  [identity-k]
   
   )
