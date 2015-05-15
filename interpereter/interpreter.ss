@@ -3,62 +3,101 @@
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form
-              (empty-env))))
+    (eval-exp form init-env (lambda (x) x))))
+
+(define global-env init-env)
 
 ; eval-exp is the main component of the interpreter
 (define eval-exp
   (let ([identity-proc (lambda (x) x)])
-    (lambda (exp env)
+    (lambda (exp env k)
       (cases expression exp
-        [lit-exp (datum) datum]
-        [var-exp (id)
-        (apply-env env id ;look up its value.
-          (lambda (x) x) ; procedure to call if id is in the environment 
-          (lambda () (apply-env init-env id
-            (lambda (x) x) 
-            (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-              "variable not found in environment: ~s"
-         id)))))] 
+        [lit-exp (datum) (apply-k k datum)]
+        [var-exp (id) ;look up its value.
+          (apply-env env 
+            id 
+            k
+            (lambda () (error 'apply-env "variable ~s is not bound" id)))] 
+
         [app-exp (rator rands)
-          (let ([proc-value (eval-exp rator env)]
-                [args (eval-rands rands env)])
-          (if (proc-val? proc-value)
-            (apply-proc proc-value args)
-            proc-value))]
+          (eval-exp rator (rator-k rands env k))]
+
         [let-exp (vars exps bodies)
           (let ([new-env
                   (extend-env vars 
-                    (eval-rands exps env)
+                    (map (lambda (e) (eval-exp e env))
+                      exps)
                     env)])
           (eval-bodies bodies new-env))]
+
         [letrec-exp (proc-names idss bodies letrec-body)
-          (eval-exp letrec-body
-            (extend-env-recursive
-                proc-names idss bodies env))]
-        [if-exp (test-exp then-exp else-exp)
-            (if (eval-exp test-exp env)
-                (eval-exp then-exp env)
-                (eval-exp else-exp env))]
+          (car (map (lambda (e) (eval-exp e
+            (extend-env-recursively
+              proc-names idss bodies env))) letrec-body))]
+
+        [if-exp (text-exp then-exp else-exp)
+            (apply-k (test-k (then-exp) (else-exp) (env) (k)) text-exp)]
         [if-exp-no-else (test-exp then-exp)
-            (if (eval-exp test-exp env)
-                (eval-exp then-exp env))]
+            (apply-k (test-no-else-k (then-exp) (env) (k)) test-exp)]
         [lambda-exp (ids bodies)
-          (closure ids bodies env)]
-        [lambda-improper (args arg bodies) (improper-closure args  arg bodies env)]
-        [lambda-single (arg bodies) (single-arg-closure arg bodies env)]
-        [lambda-multi-bodies-exp (args body) (multi-body-closure args body env)]
+          (apply-k k (closure ids bodies env))]
+        [lambda-improper (args arg bodies) 
+          (apply-k k (improper-closure args  arg bodies env))]
+        [lambda-single (arg bodies) 
+          (apply-k k (single-arg-closure arg bodies env))]
+        [lambda-multi-bodies-exp (args body) 
+          (apply-k k (multi-body-closure args body env))]
         [while-exp (test-exp body) (eval-exp-while test-exp body env)]
         [begin-exp (body) (eval-bodies body env)]
+        [quote-exp (args)
+          (apply-k k args)]
+        [set!-exp (variable new-val)
+          (set-box!
+            (apply-env-ref env variable (lambda (x) x) 
+              (lambda () (eopl:error "set! unfound input variable")))
+            (eval-exp new-val env k))]
+        [define-exp (new-variable new-val)
+          (apply-env-ref env new-variable (lambda (x) eopl:error "attempt tp redefine a variable using define")
+            (lambda ()
+              (cases enviorment global-env
+                (extended-env-record (syms vals env)
+                  (begin 
+                    (set! global-env (extend-env (cons new-variable syms)
+                      (cons (eval-exp new-value env k) (map unbox vals))
+                      (empty-env))))))))]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
+
+(define apply-k
+  (lambda (k val)
+    (cases continuation k
+      [rator-k (rands env k)
+        (eval-rands rands
+                    env
+                    (rands-k val k))]
+      [rands-k (proc-value k)
+        (apply-proc proc-value val k)]
+      [test-k (then-exp else-exp env k)
+        (if val 
+          (eval-exp then-exp env k)
+          (eval-exp else-exp env k))]
+      [test-no-else-k (then-exp env k)
+        (if val (eval-exp then-exp env k))]
+      [else (k val)]
+      )))
 
 ; evaluate the list of operands, putting results into a list
 
 (define eval-rands
-  (lambda (rands env)
-    (map 
-        (lambda (x) (eval-exp x env))
-          rands)))
+  (lambda (rands env k)
+    (map (lambda (e)
+      (eval-exp e env k)) rands)))
+
+(define eval-begin
+  (lambda (ls env)
+    (if (null? (cdr ls))
+      (begin (eval-exp (car ls) env))
+      (begin (eval-exp (car ls) env)
+             (eval-begin (cdr ls) env)))))
 
 (define eval-bodies
   (lambda (bodies env)
@@ -79,6 +118,12 @@
     (if (not (equal? #f (eval-exp test env)))
       (helper test bodies bodies env)))))
 
+(define reset-global-env
+  (lambda ()
+    (set! global-env (extend-env
+                        *prim-proc-names*
+                        (map prim-proc *prim-proc-names* (empty-env))))))
+
 ; Apply a procedure to its arguments.
 ; At this point, we only have primitive procedures. 
 ; User-defined procedures will be added later.
@@ -88,10 +133,8 @@
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
       [closure (ids bodies env)
-        (let ([new-env
-            (extend-env ids
-                args env)])
-        (eval-bodies bodies new-env))]
+        (eval-begin bodies (extend-env params args env))]
+      [applied-continuation (k) (apply-continuation k (car args))]
       [multi-body-closure (vars bodies env)
         (eval-last bodies (extend-env vars args env))]
       [single-arg-closure (var bodies env)

@@ -16,7 +16,9 @@
 	 	  (null? datum) (vector? datum)) (lit-exp datum)]
      [(pair? datum)
       (cond
-		[(eqv? 'quote (1st datum)) (lit-exp (2nd datum))]
+		[(eqv? 'quote (1st datum)) (if (= (length datum) 2)
+										(quote-exp (cadr datum))
+										(eopl:error 'parse-exp "bad quote: ~s" datum))]
 		[(eqv? 'lambda (1st datum)) 
 			(cond 
 				[(or (null? (cdr datum)) (null? (cddr datum)))
@@ -53,6 +55,14 @@
 					(eopl:error 'parse-exp "declaration in let-exp must be a list of length 2 ~s" datum)]
 				[(not (andmap (lambda (x) (symbol? (car x))) (2nd datum)))
 					(eopl:error 'parse-exp "vars in let-exp must be symbols ~s" datum)]
+				[(symbol? (cadr datum))
+					;named let
+					(named-let-exp
+						(cadr datum)
+						(map car (caddr datum))
+						(map parse-exp (map cadr (caddr datum)))
+						(list (parse-exp (cadddr datum))))]
+
 				[else (let-exp (map car (2nd datum)) (map (lambda (x) (parse-exp (2nd x))) (2nd datum)) (map parse-exp (cddr datum)))])]
 		[(eqv? 'let* (1st datum))
 			(cond
@@ -80,15 +90,15 @@
 				[(not (andmap (lambda (x) (symbol? (car x))) (2nd datum)))
 					(eopl:error 'parse-exp "vars in letrec-exp must be symbols ~s" datum)]
 				[else (letrec-exp 
-						(car (apply map list (cadr datum)))
-						(map cadr (map cadr (cadr datum))) 
-						(map parse-exp (map caddr (map cadr (cadr datum)))) 
-						(parse-exp (caddr datum)))])]
+						(map car (cadr datum)) ; proc-names
+						(map cadr (map cadr (cadr datum))) ; proc-args
+						(map parse-exp (map caddr (map cadr (cadr datum)))) ; proc-bodies
+						(map parse-exp (cddr datum)))])]
 		[(eqv? 'if (1st datum)) 
 			(cond 
 			[(or (null? (cddr datum)) (null? (cdr datum)))
 				(eopl:error 'parse-exp "if-expression ~s does not have (only) test, then, and else" datum)]
-			[(null? (cdddr datum))
+			[(= (length datum) 2)
 				(if-exp-no-else
 				(parse-exp (2nd datum))
 				(parse-exp (3rd datum)))]
@@ -105,6 +115,8 @@
 					(set!-exp 
 					(2nd datum)
 					(parse-exp (3rd datum)))])]
+		[(eqv? 'define (1st datum))
+			(define-exp (cadr datum) parse-exp (caddr datum))]
 		[(eqv? 'cond (1st datum))
 			(if (null? (cddr datum))
 				(cond-exp 	(list (lit-exp #f))
@@ -183,6 +195,10 @@
 (define syntax-expand
 	(lambda (exp)
 		(cases expression exp
+			[lit-exp (datum) exp]
+			[var-exp (id) exp]
+			[app-exp (rator rands)
+				(app-exp (syntax-expand rator) (map syntax-expand rands))]
 			[let-exp (vars exps body)
 				(let-exp 
 					vars
@@ -222,13 +238,27 @@
 					args 
 					idss 
 					(map syntax-expand exps) 
-					(syntax-expand body))]
+					(map syntax-expand body))]
 			[named-let-exp (name args exps body)
 				(app-exp (letrec-exp
 					(list name)
 					(list args)
 					(map syntax-expand body)
 					(parse-exp name)) exps)]
+			[if-exp (text-exp then-exp else-exp)
+					(if-exp 
+					(syntax-expand text-exp) 
+					(syntax-expand then-exp) 
+					(syntax-expand else-exp))]
+			[if-exp-no-else (test-exp then-exp)
+				(if-exp-no-else
+					(syntax-expand test-exp) 
+					(syntax-expand then-exp))]
+			[set!-exp (variable new-val)
+				(set!-exp variable (syntax-expand new-val))]
+			[define-exp (new-variable new-val)
+				(define-exp new-variable (syntax-expand new-val))]
+			[quote-exp (args) exp]
 			[else exp])))
 
 (define (case-to-cond case cases body)

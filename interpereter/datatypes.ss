@@ -4,15 +4,19 @@
 (define-datatype expression expression?
   [var-exp        ; variable references
    (id symbol?)]
+
   [lit-exp        ; "Normal" data.  Did I leave out any types?
    (datum literal?)]
+
   [app-exp        ; applications
    (rator expression?)
    (rands (list-of expression?))]
+
   [let-exp
     (vars (list-of symbol?))
     (exps (list-of expression?))
     (bodies (list-of expression?))]
+
   [named-let-exp
     (name symbol?)
     (args (list-of symbol?))
@@ -22,7 +26,7 @@
     (proc-names (list-of symbol?))
     (idss (list-of (list-of symbol?)))
     (bodies (list-of expression?))
-    (letrec-body expression?)]
+    (letrec-body (list-of expression?))]
   [if-exp
         (text-exp expression?)
         (then-exp expression?)
@@ -63,6 +67,14 @@
     (syms (list-of symbol?))
     (body (list-of expression?))
     (vals (list-of number?))]
+  [set!-exp
+    (variable symbol?)
+    (new-val expression?)]
+  [define-exp
+    (new-variable symbol?)
+    (new-val expression?)]
+  [quote-exp
+    (args scheme-value?)]
   )
 
 	
@@ -72,8 +84,8 @@
 (define-datatype proc-val proc-val?
   [prim-proc (name symbol?)]
   [closure
-    (args (list-of symbol?))
-    (body expression?)
+    (args sym-or-ls?)
+    (body exp-or-ls?)
     (env environment?)]
   [multi-body-closure
     (args (list-of symbol?))
@@ -87,9 +99,17 @@
     (args (list-of symbol?))
     (arg symbol?)
     (body (list-of expression?))
-    (env environment?)])
+    (env environment?)]
+  [applied-continuation
+    (k continuation?)])
 	 
-	 
+	(define sym-or-ls?
+    (lambda (x)
+      (or (symbol? x) (list-of symbol? x))))
+
+  (define exp-or-ls?
+    (lambda (x)
+      (or (expression? x) ((list-of expression?) x))))
 	 
 	
 ;; environment type definitions
@@ -98,13 +118,44 @@
   (lambda (x) #t))
 
 (define-datatype environment environment?
-  (empty-env-record)
-  (extended-env-record
-    (syms (list-of symbol?))
-    (vals (list-of scheme-value?))
-    (env environment?))
-  (recursively-extended-env-record
+  [empty-env-record]
+  [extended-env-record
+    (syms improper-or-regular)
+    (vals (list-of box?))
+    (env environment?)]
+  [recursively-extended-env-record
     (proc-names (list-of symbol?))
     (idss (list-of (list-of symbol?)))
     (bodies (list-of expression?))
-    (env environment?)))
+    (old-env environment?)])
+
+(define improper?
+  (lambda (x)
+    (and (not (list? x)) (pair? x))))
+
+(define improper-or-regular
+  (lambda (x)
+    (or ((list-of symbol?) x) (improper? x))))
+
+;Continuation Datatype
+
+(define-datatype continuation continuation?
+  [test-k 
+    (then-exp expression?)
+  (else-exp expression?)
+  (env environment?)
+  (k continuation?)]
+  [rator-k
+    (rands (list-of expression?))
+  (env environment?)
+  (k continuation?)]
+  
+  [rands-k
+    (proc-value scheme-value?)
+  (k continuation?)]
+  [test-no-else-k
+    (then-exp expression?)
+  (env environment?)
+  (k continuation?)]
+  
+  )
