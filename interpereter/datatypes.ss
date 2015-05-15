@@ -19,9 +19,9 @@
     (exps (list-of expression?))
     (body (list-of expression?))]
   [let*-exp
-    (args (list-of symbol?)
+    (args (list-of symbol?))
     (exps (list-of expression?))
-    (body (list-of expression?)))]
+    (body (list-of expression?))]
   [letrec-exp
     (proc-names (list-of symbol?))
     (idss (list-of (list-of symbol?)))
@@ -61,12 +61,10 @@
     (args list?)
     (arg symbol?)
     (body (list-of expression?))]
-
   [lambda-sym-exp
     (syms (list-of symbol?))
     (body (list-of expression?))
     (vals (list-of number?))]
-
   [set!-exp
     (id symbol?)
     (value expression?)]

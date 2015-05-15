@@ -193,8 +193,8 @@
 				(if (null? args)
 					(syntax-expand (begin-exp (map syntax-expand body)))
 					(app-exp (lambda-exp (list (car args))
-						(syntax-expand (let*-exp (cdr args (cdr exps) body)))
-						(list (syntax-expand (car exps))))))]
+						(syntax-expand (let*-exp (cdr args) (cdr exps) body)))
+						(list (syntax-expand (car exps)))))]
 			[cond-exp (conds bodies else-clause)
 				(if (null? (cdr conds))
 					(if-exp (syntax-expand (car conds))
@@ -223,7 +223,6 @@
 			[lambda-improper (args arg body)
 				(lambda-improper args arg (map syntax-expand body))]
 			;[case-exp (key clauses) (case-helper key clauses)] ;deprecated
-			[else-exp (bodies) (app-exp (lambda-exp '() (map syntax-expand bodies)) '())]
 			[letrec-exp (args idss exps body) 
 				(letrec-exp 
 					args 
@@ -251,7 +250,7 @@
 				(define-exp sym (syntax-expand val))]
 			[quote-exp (args) exp]
 			[while-exp (test-exp body)
-				(while-exp (syntax-expand case) (map syntax-expand body))]
+				(while-exp (syntax-expand test-exp) (map syntax-expand body))]
 			[begin-exp (body)
 				(app-exp (lambda-multi-bodies-exp '() (map syntax-expand body)) '())]
 			[else exp])))
