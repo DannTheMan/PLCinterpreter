@@ -134,7 +134,7 @@
 ; built-in procedure individually.  We are "cheating" a little bit.
 
 (define apply-prim-proc
-  (lambda (prim-proc args k)
+  (lambda (prim-proc args)
     (case prim-proc
       [(+) (apply + args)]
       [(-) (apply - args)]
@@ -188,7 +188,7 @@
       [(display) (display (1st args))]
       [(newline) (newline)]
       [(quotient) (apply quotient args)]
-      [(map) (map-proc (1st args) (cdr args)))]
+      [(map) (map-proc (1st args) (cdr args))]
       [(apply) (apply-proc (1st args) (2nd args))]
       [(or) (if (= (length args) 0) #f
                (if (= (length args) 1) (1st args)
