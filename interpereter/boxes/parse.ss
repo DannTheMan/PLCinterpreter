@@ -12,8 +12,7 @@
   (lambda (datum)
     (cond
 	 [(symbol? datum) (var-exp datum)]
-	 [(or (number? datum) (boolean? datum) (string? datum)
-	 	  (null? datum) (vector? datum)) (lit-exp datum)]
+	 [(or (number? datum)(boolean? datum)(string? datum)) (lit-exp datum)]
      [(pair? datum)
       (cond
 		[(eqv? 'quote (1st datum)) (lit-exp (2nd datum))]
@@ -21,8 +20,7 @@
 			(cond 
 				[(or (null? (cdr datum)) (null? (cddr datum)))
 					(eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)]
-				[(and (list? (2nd datum))(not (andmap (lambda (x) (symbol? x)) (2nd datum))))
-					(eopl:error 'parse-exp "lambda's formal arguments ~s must all be symbols" (2nd datum))]
+				
 				[(cond
 					[(symbol? (2nd datum))(lambda-single
 							(2nd datum)
@@ -40,7 +38,7 @@
 				[(null? (cddr datum))
 					(eopl:error 'parse-exp "let-expression has incorrect length ~s" datum)]
 				[(symbol? (2nd datum))
-					(named-let-exp (2nd datum)(map car (3rd datum)) (map (lambda (x) (parse-exp (2nd x))) (3rd datum)) (map parse-exp (cdddr datum)))]
+					(named-let (2nd datum)(map car (3rd datum)) (map (lambda (x) (parse-exp (2nd x))) (3rd datum)) (map parse-exp (cdddr datum)))]
 				[(not (or (list? (2nd datum)) (null?(2nd datum))))
 					(eopl:error 'parse-exp "declarations in let-expression not a list ~s" datum)]	
 				[(not (andmap (lambda (x) (list? x)) (2nd datum))) 
@@ -76,9 +74,9 @@
 				[(not (andmap (lambda (x) (symbol? (car x))) (2nd datum)))
 					(eopl:error 'parse-exp "vars in letrec-exp must be symbols ~s" datum)]
 				[else (letrec-exp 
-						(map car (cadr datum)) ; proc-names
-						(map cadr (map (lambda (x) (2nd x)) (2nd datum))) ; proc-args
-						(map (lambda (x) (parse-exp (2nd x))) (2nd datum)) ; proc-bodies
+						(map car (2nd datum)) 
+						(map 2nd (map (lambda (x) (2nd x)) (2nd datum))) 
+						(map (lambda (x) (parse-exp (2nd x))) (2nd datum)) 
 						(parse-exp (3rd datum)))])]
 		[(eqv? 'if (1st datum)) 
 			(cond 
@@ -90,9 +88,9 @@
 				(parse-exp (3rd datum)))]
 			[else
 				(if-exp 
-					(parse-exp (2nd datum))
-					(parse-exp (3rd datum))
-					(parse-exp (4th datum)))])]
+				(parse-exp (2nd datum))
+				(parse-exp (3rd datum))
+				(parse-exp (4th datum)))])]
 		[(eqv? 'set! (1st datum))
 			(cond 
 				[(or (null? (cddr datum)) (not(null?(cdddr datum))))
@@ -101,8 +99,6 @@
 					(set!-exp 
 					(2nd datum)
 					(parse-exp (3rd datum)))])]
-		[(eqv? 'define (1st datum))
-			(define-exp (cadr datum) parse-exp (caddr datum))]
 		[(eqv? 'cond (1st datum))
 			(if (null? (cddr datum))
 				(cond-exp 	(list (lit-exp #f))
@@ -112,18 +108,20 @@
 					(remove-last (map (lambda (x) (parse-exp (1st x))) (cdr datum)))
 					(remove-last (map (lambda (x) (parse-exp (2nd x))) (cdr datum)))
 					(last (map (lambda (x) (if (eqv? 'else (1st x)) (parse-exp (2nd x))))  (cdr datum)))))]
-		[(eqv? 'while (1st datum))
-			(while-exp 
-				(parse-exp (2nd datum))
-				(map parse-exp (cddr datum)))]
+		[(eqv? 'while (1st datum))(while-exp 
+			(parse-exp (2nd datum))
+			(map parse-exp (cddr datum)))]
 		[(eqv? 'case  (1st datum))(case-exp
 			(parse-exp (2nd datum))
 			(remove-last (map (lambda (x) (1st x)) (cddr datum)))
 			(remove-last (map (lambda (x) (parse-exp (2nd x))) (cddr datum)))
 			(parse-exp (last (cddr datum))))]
 		[(eqv? 'begin (1st datum))
-			(begin-exp 
-				(map parse-exp (cdr datum)))]
+			(begin-exp (map parse-exp (cdr datum)))]
+		[(eqv? 'define (1st datum))
+			(define-exp (2nd datum) (parse-exp (3rd datum)))]
+		[(eqv? 'or (1st datum))
+			(or-exp (map parse-exp (cdr datum)))]
        [else (if (not (list? datum))
 			(eopl:error 'parse-exp "Error in parse-exp: application ~s is not a proper list" datum)
 			(app-exp (parse-exp (1st datum)) 
@@ -142,6 +140,11 @@
 	(if (pair? p)
 		(get-last-of-pair (cdr p))
 		p))
+(define (last ls)
+	(if (not (null? ls))
+		(if (null? (cdr ls))
+			(car ls)
+			(last (cdr ls)))))
 
 (define (unparse-exp exp)
 	(cases expression exp
@@ -165,7 +168,8 @@
  		[while-exp (test-exp body) (cons (unparse-exp test-exp) (map unparse-exp body))]))
 
 (define (literal? x)
- 	(or (number? x) (list? x) (string? x) (symbol? x) (null? x) (vector? x)(equal? #f x) (equal? #t x)))
+	(or (number? x) (string? x) (null? x) (vector? x)(equal? #f x) 
+	(equal? #t x) (symbol? x) (list? x)))
 
 
 
@@ -178,82 +182,79 @@
 ;                       |
 ;-----------------------+
 
-(define syntax-expand
-	(lambda (exp)
-		(cases expression exp
-			[lit-exp (datum) exp]
-			[var-exp (id) exp]
-			[app-exp (rator rands)
-				(app-exp (syntax-expand rator) (map syntax-expand rands))]
-			[let-exp (vars exps body)
-				(app-exp
-					(lambda-multi-bodies-exp vals (map syntax-expand body))
-					(map syntax-expand exps))]
-			[let*-exp (args exps body)
-				(if (null? args)
-					(syntax-expand (begin-exp (map syntax-expand body)))
-					(app-exp (lambda-exp (list (car args))
-						(syntax-expand (let*-exp (cdr args) (cdr exps) body)))
-						(list (syntax-expand (car exps)))))]
-			[cond-exp (conds bodies else-clause)
-				(if (null? (cdr conds))
-					(if-exp (syntax-expand (car conds))
-							(syntax-expand (car bodies))
-							(syntax-expand else-clause))
-					(if-exp (syntax-expand (car conds))
-							(syntax-expand (car bodies))
-							(syntax-expand (cond-exp (cdr conds)
-													 (cdr bodies)
-													 else-clause))))]
-			[case-exp (key conds bodies else-clause)
-				(if (null? conds)
-					(syntax-expand (caaddr else-clause))
-					(let ([a (case-to-cond (syntax-expand key) (1st conds) (1st bodies))])
-						(syntax-expand (cond-exp
-							(map (lambda (x) (1st x)) a)
-							(map (lambda (x) (2nd x)) a)
-							(syntax-expand (case-exp key (cdr conds) 
-													(cdr bodies) else-clause))))))]
-			[lambda-exp (args body)
-				(lambda-exp	args (syntax-expand body))]
-			[lambda-multi-bodies-exp (args body)
-				(lambda-multi-bodies-exp args (map syntax-expand body))]
-			[lambda-single (arg body)
-				(lambda-single arg (map syntax-expand body))]
-			[lambda-improper (args arg body)
-				(lambda-improper args arg (map syntax-expand body))]
-			;[case-exp (key clauses) (case-helper key clauses)] ;deprecated
-			[letrec-exp (args idss exps body) 
-				(letrec-exp 
-					args 
-					idss 
-					(map syntax-expand exps) 
-					(map syntax-expand body))]
-			[named-let-exp (name args exps body)
-				(letrec-exp
-					(list name)
-					(list args)
-					(list (lambda-multi-bodies-exp args (map syntax-expand body)))
-					(app-exp (lambda-multi-bodies-exp args (map syntax-expand body)) (map syntax-expand exps)))]
-			[if-exp (test-exp then-exp else-exp)
-					(if-exp 
-					(syntax-expand text-exp) 
-					(syntax-expand then-exp) 
-					(syntax-expand else-exp))]
-			[if-exp-no-else (test-exp then-exp)
-				(if-exp-no-else
-					(syntax-expand test-exp) 
-					(syntax-expand then-exp))]
-			[set!-exp (variable new-val)
-				(set!-exp variable (syntax-expand new-val))]
-			[define-exp (sym val)
-				(define-exp sym (syntax-expand val))]
-			[quote-exp (args) exp]
-			[while-exp (test-exp body)
-				(while-exp (syntax-expand test-exp) (map syntax-expand body))]
-			[begin-exp (body)
-				(app-exp (lambda-multi-bodies-exp '() (map syntax-expand body)) '())]
-			[else exp])))
+(define (syntax-expand exp)
+	(cases expression exp
+		[let-exp (args exps body) 
+			(app-exp 
+				(lambda-multi-bodies-exp args (map syntax-expand body))
+				(map syntax-expand exps))]
+		[let*-exp (args exps body)
+			(if (null? args)
+				(syntax-expand (begin-exp (map syntax-expand body)))
+				(app-exp (lambda-exp (list (car args)) 
+							(syntax-expand (let*-exp (cdr args) (cdr exps) body)))
+						 (list (syntax-expand (car exps)))))]
+		[lambda-exp (args body)
+			(lambda-exp	args (syntax-expand body))]
+		[lambda-multi-bodies-exp (args body)
+			(lambda-multi-bodies-exp args (map syntax-expand body))]
+		[lambda-single (arg body)
+			(lambda-single arg (map syntax-expand body))]
+		[lambda-improper (args arg body)
+			(lambda-improper args arg (map syntax-expand body))]
+		[if-exp (cond then else)
+			(if-exp (syntax-expand cond)
+					(syntax-expand then)
+					(syntax-expand else))]
+		[if-exp-no-else (cond then)
+			(if-exp-no-else (syntax-expand cond)
+							(syntax-expand then))]
+		[app-exp (rator rands) 
+			(app-exp (syntax-expand rator)
+					 (map syntax-expand rands))]
+		[while-exp (case body)
+			(while-exp	(syntax-expand case) (map syntax-expand body))]
+		[cond-exp (conds bodies else)
+			(if (null? (cdr conds))
+				(if-exp (syntax-expand (car conds))
+						(syntax-expand (car bodies))
+						(syntax-expand else))
+				(if-exp (syntax-expand (car conds))
+						(syntax-expand (car bodies))
+						(syntax-expand (cond-exp (cdr conds) (cdr bodies) else))))]
+		[case-exp (case conds bodies else)
+		(if (null? conds)
+			(syntax-expand (caaddr else))
+			(let ([a (case-to-cond (syntax-expand case) (1st conds) (1st bodies))]) 
+				(syntax-expand 
+					(cond-exp 
+						(map (lambda (x) (1st x)) a)
+						(map (lambda (x) (2nd x)) a)
+						(syntax-expand (case-exp case (cdr conds) (cdr bodies) else))))))]
+		[begin-exp (body)  (app-exp (lambda-multi-bodies-exp '() (map syntax-expand body))
+									'())]
+		[letrec-exp (args idss exps body) 
+			(letrec-exp args idss (map syntax-expand exps) 
+			(syntax-expand body))]
+		[named-let (name args exps body) 
+			(letrec-exp 
+				(list name) 
+				(list args) 
+				(list (lambda-multi-bodies-exp args (map syntax-expand body)))
+				(app-exp (lambda-multi-bodies-exp args (map syntax-expand body)) (map syntax-expand exps)))]
+		[define-exp (sym val)
+			(define-exp sym (syntax-expand val))]
+		[or-exp (bodies)
+			(if (null? bodies)
+				(lit-exp #f)
+				(if (null? (cdr bodies))
+				(app-exp 
+					(lambda-exp (list 'a) (if-exp (var-exp 'a) (var-exp 'a) (lit-exp #f)))
+					(list (syntax-expand (car bodies))))
+				(app-exp 
+					(lambda-exp (list 'a) (if-exp (var-exp 'a) (var-exp 'a) (syntax-expand (or-exp (cdr bodies)))))
+					(list (syntax-expand (car bodies))))))]
+		[else exp]))
 
 (define (case-to-cond case cases body)
 	(if (null? cases)
@@ -264,14 +265,4 @@
 				(syntax-expand body)))
 			(case-to-cond case (cdr cases) body))))
 
-
-(define case-helper
-	(lambda (key clauses)
-		(if (null? clauses) 
-			(void)
-			(let ([x (car clauses)])
-				(if (expression? x)
-					(syntax-expand (car clauses))
-					(let ([y (list (lit-exp (1st x)) key)])
-						(if-exp (app-exp (var-exp 'contains?) y) (syntax-expand (begin-exp (2nd x))) (case-helper key (cdr clauses)))))))))
 
