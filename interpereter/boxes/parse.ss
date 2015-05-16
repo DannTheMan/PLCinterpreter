@@ -27,7 +27,12 @@
 							(map parse-exp (cddr datum)))]
 					[(list? (2nd datum))
 							(lambda-multi-bodies-exp
-							(2nd datum)
+							(map 
+								(lambda (x) 
+									(if (list? x)
+										(ref-arg (2nd x)) 
+										(var-arg x))) 
+								(2nd datum))
 							(map parse-exp (cddr datum)))]
 					[else (lambda-improper
 							(get-car-of-pair (2nd datum))
@@ -140,11 +145,6 @@
 	(if (pair? p)
 		(get-last-of-pair (cdr p))
 		p))
-(define (last ls)
-	(if (not (null? ls))
-		(if (null? (cdr ls))
-			(car ls)
-			(last (cdr ls)))))
 
 (define (unparse-exp exp)
 	(cases expression exp
@@ -186,7 +186,7 @@
 	(cases expression exp
 		[let-exp (args exps body) 
 			(app-exp 
-				(lambda-multi-bodies-exp args (map syntax-expand body))
+				(lambda-multi-bodies-exp (map var-arg args) (map syntax-expand body))
 				(map syntax-expand exps))]
 		[let*-exp (args exps body)
 			(if (null? args)
@@ -233,29 +233,26 @@
 						(syntax-expand (case-exp case (cdr conds) (cdr bodies) else))))))]
 		[begin-exp (body)  (app-exp (lambda-multi-bodies-exp '() (map syntax-expand body))
 									'())]
-		[letrec-exp (args idss exps body) 
-			(letrec-exp args idss (map syntax-expand exps) 
-			(syntax-expand body))]
+		[letrec-exp (args idss exps body) (letrec-exp args idss (map syntax-expand exps) 
+										(syntax-expand body))]
 		[named-let (name args exps body) 
 			(letrec-exp 
 				(list name) 
 				(list args) 
-				(list (lambda-multi-bodies-exp args (map syntax-expand body)))
-				(app-exp (lambda-multi-bodies-exp args (map syntax-expand body)) (map syntax-expand exps)))]
+				(list (lambda-multi-bodies-exp (map var-arg args) (map syntax-expand body)))
+				(app-exp (lambda-multi-bodies-exp (map var-arg args) (map syntax-expand body)) (map syntax-expand exps)))]
 		[define-exp (sym val)
 			(define-exp sym (syntax-expand val))]
 		[or-exp (bodies)
-			(if (null? bodies)
-				(lit-exp #f)
-				(if (null? (cdr bodies))
-				(app-exp 
-					(lambda-exp (list 'a) (if-exp (var-exp 'a) (var-exp 'a) (lit-exp #f)))
-					(list (syntax-expand (car bodies))))
-				(app-exp 
-					(lambda-exp (list 'a) (if-exp (var-exp 'a) (var-exp 'a) (syntax-expand (or-exp (cdr bodies)))))
-					(list (syntax-expand (car bodies))))))]
+			(if (null? (cdr bodies))
+			(app-exp 
+				(lambda-exp (list 'a) (if-exp (var-exp 'a) (var-exp 'a) (lit-exp #f)))
+				(list (syntax-expand (car bodies))))
+			(app-exp 
+				(lambda-exp (list 'a) (if-exp (var-exp 'a) (var-exp 'a) (syntax-expand (or-exp (cdr bodies)))))
+				(list (syntax-expand (car bodies)))))]
 		[else exp]))
-
+	
 (define (case-to-cond case cases body)
 	(if (null? cases)
 		'()
@@ -264,5 +261,6 @@
 				(app-exp (var-exp 'equal?) (list  case (lit-exp (car cases))))
 				(syntax-expand body)))
 			(case-to-cond case (cdr cases) body))))
+
 
 
