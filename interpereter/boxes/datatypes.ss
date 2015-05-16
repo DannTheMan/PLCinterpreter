@@ -8,7 +8,7 @@
     (args list?)
     (body expression?)]
   [lambda-multi-bodies-exp
-    (args (list-of symbol?))
+    (args (list-of lambda-args?))
     (body (list-of expression?))]
   [lambda-single
     (arg symbol?)
@@ -69,7 +69,6 @@
     (val expression?)]
   [or-exp
     (body (list-of expression?))])
-
 (define (literal? x)
   (or (number? x) (string? x) (null? x) (vector? x)(equal? #f x) 
   (equal? #t x) (symbol? x) (list? x)))
@@ -81,24 +80,22 @@
   [prim-proc
    (name symbol?)]
   [closure
-    (args (list-of symbol?))
-    (body expression?)
-    (env environment?)]
+  (args (list-of symbol?))
+  (body expression?)
+  (env environment?)]
   [multi-body-closure
-    (args (list-of symbol?))
-    (body (list-of expression?))
-    (env environment?)]
+  (args (list-of lambda-args?))
+  (body (list-of expression?))
+  (env environment?)]
   [single-arg-closure
-    (arg symbol?)
-    (body (list-of expression?))
-    (env environment?)]
+  (arg symbol?)
+  (body (list-of expression?))
+  (env environment?)]
   [improper-closure
-    (args (list-of symbol?))
-    (arg symbol?)
-    (body (list-of expression?))
-    (env environment?)]
-  [continuation-proc
-    (k continuation?)])
+  (args (list-of symbol?))
+  (arg symbol?)
+  (body (list-of expression?))
+  (env environment?)])
 	
 ;; environment type definitions
 
@@ -110,7 +107,7 @@
   (recursively-extended-env-record
   (proc-names (list-of symbol?))
   (idss (list-of (list-of symbol?)))
-  (bodies (list-of expression?))
+  (bodies (list-of box?))
   (env environment?))
   (extended-env-record
    (syms (list-of symbol?))
@@ -120,44 +117,4 @@
     (syms (list-of symbol?))
     (vals (list-of scheme-value?))))
 
-;Continuation Datatype
 
-(define-datatype continuation continuation?
-  [if-k 
-    (then-exp expression?)
-    (else-exp expression?)
-    (env environment?)
-    (k continuation?)]
-  [if-no-else-k 
-    (then-exp expression?)
-    (env environment?)
-    (k continuation?)]
-  [while-k
-    (bodies (list-of expression?))
-    (loop expression?)
-    (env environment?)
-    (k continuation?)]
-  [rator-k 
-    (rands (list-of expression?))
-    (env environment?)
-    (k continuation?)]
-  [rands-k
-    (proc-value scheme-value?)
-    (k continuation?)]
-  [set!-k
-    (var symbol?)
-    (env environment?)
-    (k continuation?)]
-  [define-k
-    (var symbol?)
-    (k continuation?)]
-  [eval-rands-k
-    (rands list?)
-    (args list?)
-    (env environment?)
-    (k continuation?)]
-  [eval-last-k
-    (bodies list?)
-    (env environment?)
-    (k continuation?)]
-  [identity-k])
