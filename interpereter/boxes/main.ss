@@ -3,34 +3,41 @@
 ;                  
 ; Claude Anderson.  Last modified April, 2014
 
-(load "C:/Users/lehmandr/Documents/PLCinterpreter/interpereter/chez-init.ss") 
-;(load "chez-init.ss")
+; evaluator for simple expressions.
+; Possible starting point for first interpreter assignment.
+;                                   
+; Claude Anderson.  Last modified April, 2014
+
+;; Project modified by Tim Anderson, Daniel Lehman
+;; Note:  this passes all tests when ran on our computers
+
+(load "chez-init.ss") 
+;(load "C:/Users/anderst4/Documents/Courses/CSSE304-2/PLCinterpreter/interpereter/boxes/chez-init.ss")
 
 (define load-all ; make it easy to reload the files
-  (lambda ()
-    (load "C:/Users/lehmandr/Documents/PLCinterpreter/interpereter/interpreter.ss")
-    (load "C:/Users/lehmandr/Documents/PLCinterpreter/interpereter/datatypes.ss")
-    (load "C:/Users/lehmandr/Documents/PLCinterpreter/interpereter/parse.ss")
-    (load "C:/Users/lehmandr/Documents/PLCinterpreter/interpereter/env.ss")
-    
-    (load "C:/Users/lehmandr/Documents/PLCinterpreter/interpereter/datatypes.ss")
-    (load "C:/Users/lehmandr/Documents/PLCinterpreter/interpereter/parse.ss")
-    (load "C:/Users/lehmandr/Documents/PLCinterpreter/interpereter/env.ss")
-    (load "C:/Users/lehmandr/Documents/PLCinterpreter/interpereter/interpreter.ss")
-    
-    ;(load "datatypes.ss")
-    ;(load "parse.ss")
-    ;(load "env.ss")
-    ;(load "interpreter.ss")
-    ;(load "datatypes.ss")
-    ;(load "parse.ss")
-    ;(load "env.ss")
-    ;(load "interpreter.ss")
-    ))
+    (lambda ()
+        (load "datatypes.ss")
+        ;(load "C:/Users/anderst4/Documents/Courses/CSSE304-2/PLCinterpreter/interpereter/boxes/datatypes.ss")
+        (load "parse.ss")
+        ;(load "C:/Users/anderst4/Documents/Courses/CSSE304-2/PLCinterpreter/interpereter/boxes/parse.ss")
+        (load "env.ss")
+        ;(load "C:/Users/anderst4/Documents/Courses/CSSE304-2/PLCinterpreter/interpereter/boxes/env.ss")
+        (load "interpreter.ss")
+        ;(load "C:/Users/anderst4/Documents/Courses/CSSE304-2/PLCinterpreter/interpereter/boxes/interpreter.ss")
+
+        (load "datatypes.ss")
+        ;(load "C:/Users/anderst4/Documents/Courses/CSSE304-2/PLCinterpreter/interpereter/boxes/datatypes.ss")
+        (load "parse.ss")
+        ;(load "C:/Users/anderst4/Documents/Courses/CSSE304-2/PLCinterpreter/interpereter/boxes/parse.ss")
+        (load "env.ss")
+        ;(load "C:/Users/anderst4/Documents/Courses/CSSE304-2/PLCinterpreter/interpereter/boxes/env.ss")
+        (load "interpreter.ss")))
+        ;(load "C:/Users/anderst4/Documents/Courses/CSSE304-2/PLCinterpreter/interpereter/boxes/interpreter.ss")))
 
 (load-all)
 
 (define l load-all) ; even easier!
+
 
 
 
