@@ -73,6 +73,13 @@
   (or (number? x) (string? x) (null? x) (vector? x)(equal? #f x) 
   (equal? #t x) (symbol? x) (list? x)))
 	
+(define-datatype lambda-args lambda-args?
+  [ref-arg 
+    (arg symbol?)]
+  [var-arg 
+    (arg symbol?)])
+
+
 ; datatype for procedures.  At first there is only one
 ; kind of procedure, but more kinds will be added later.
 
